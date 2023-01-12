@@ -42,7 +42,7 @@ export class MessageHandler {
 		this.handlers.clear();
 	}
 
-	async send (peer: PeerId, message: Uint8Array) {
+	async send (message: Uint8Array, peer: PeerId) {
 		const writer = await this.establishStream(peer);
 
 		writer.push(message);
