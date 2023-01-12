@@ -39,6 +39,7 @@ export class MessageHandler {
 
 	async stop () {
 		await this.components.registrar.unhandle(this.options.protocol);
+		this.handlers.clear();
 	}
 
 	async send (peer: PeerId, message: Uint8Array) {
