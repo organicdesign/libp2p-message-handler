@@ -1,16 +1,9 @@
-# typescript-template
+# libp2p-message-handler
 
-A template for NodeJS projects using typescript.
+A message handler for Libp2p. This package makes it easy to create a protocol on Libp2p by converting the streams into a discrete messaging system.
 
-## Setup
+## Install
 
-1. Edit the `package.json` and change the following values:
-	* name
-	* description
-	* author
-	* version
-	* repository
-
-2. Prefix the test command with `NODE_OPTIONS=--experimental-vm-modules` if needed. (Needed for pacakge/subpackage imports.)
-
-3. Update this `README.md` file.
+```
+npm i @organicdesign/libp2p-message-handler
+```
