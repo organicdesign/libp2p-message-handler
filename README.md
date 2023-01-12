@@ -93,3 +93,7 @@ handler.unhandle(handlerFunc);
 - `handlerFunc` `<(Uint8Array, PeerId) => void>` The handler function which was previously handled.
 
 Stop handling messages with this handler function.
+
+## TODO
+
+- Add tests.

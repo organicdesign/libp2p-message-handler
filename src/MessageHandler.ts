@@ -27,31 +27,36 @@ export class MessageHandler {
 		this.components = components;
 
 		this.options = {
-			protocol: options.protocol ?? "/message-handler/0.0.1",
+			protocol: options.protocol ?? "/message-handler/0.0.1"
 		};
 	}
 
+	// Start the message handler.
 	async start () {
 		await this.components.registrar.handle(this.options.protocol, async ({ stream, connection }) => {
 			this.handleStream(stream, connection);
 		});
 	}
 
+	// Stop the message handler.
 	async stop () {
 		await this.components.registrar.unhandle(this.options.protocol);
 		this.handlers.clear();
 	}
 
+	// Send a message to a connected peer.
 	async send (message: Uint8Array, peer: PeerId) {
 		const writer = await this.establishStream(peer);
 
 		writer.push(message);
 	}
 
+	// Handle an incomming message.
 	handle (handler: Handler) {
 		this.handlers.add(handler);
 	}
 
+	// Stop handling incomming messages with the handler.
 	unhandle (handler: Handler) {
 		this.handlers.delete(handler);
 	}
