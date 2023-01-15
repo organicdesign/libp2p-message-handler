@@ -96,4 +96,5 @@ Stop handling messages with this handler function.
 
 ## TODO
 
-- Add tests.
+- [ ] Add tests.
+- [ ] Add logging.
