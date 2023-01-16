@@ -5,6 +5,12 @@ import type { PeerId } from "@libp2p/interface-peer-id";
 import * as lp from "it-length-prefixed";
 import { pipe } from "it-pipe";
 import { pushable, Pushable } from "it-pushable";
+import { logger } from "@libp2p/logger";
+
+const log = {
+	message: logger("libp2p:message-handler:messages"),
+	general: logger("libp2p:message-handler:general")
+};
 
 export interface MessageHandlerComponents {
 	connectionManager: ConnectionManager
@@ -36,29 +42,39 @@ export class MessageHandler {
 		await this.components.registrar.handle(this.options.protocol, async ({ stream, connection }) => {
 			this.handleStream(stream, connection);
 		});
+
+		log.general("started");
 	}
 
 	// Stop the message handler.
 	async stop () {
 		await this.components.registrar.unhandle(this.options.protocol);
 		this.handlers.clear();
+
+		log.general("stopped");
 	}
 
 	// Send a message to a connected peer.
-	async send (message: Uint8Array, peer: PeerId) {
-		const writer = await this.establishStream(peer);
+	async send (message: Uint8Array, peerId: PeerId) {
+		const writer = await this.establishStream(peerId);
 
 		writer.push(message);
+
+		log.message("sent message to: peer %p", peerId);
 	}
 
 	// Handle an incomming message.
 	handle (handler: Handler) {
 		this.handlers.add(handler);
+
+		log.general("added message handler");
 	}
 
 	// Stop handling incomming messages with the handler.
 	unhandle (handler: Handler) {
 		this.handlers.delete(handler);
+
+		log.general("removed message handler");
 	}
 
 	// Establish a stream to a peer reusing an existing one if it already exists.
@@ -66,51 +82,65 @@ export class MessageHandler {
 		const connection = this.components.connectionManager.getConnections().find(c => c.remotePeer.equals(peer));
 
 		if (connection == null) {
+			log.general.error("failed to open stream: peer is not connected");
 			throw new Error("not connected");
 		}
 
-		for (const stream of connection.streams) {
-			if (this.writers.has(stream.id)) {
-				// We already have a stream open.
-				return this.writers.get(stream.id)!;
-			}
+		const writer = this.writers.get(peer.toString());
+
+		if (writer != null) {
+			// We already have a stream open.
+			return writer;
 		}
 
-		const stream = await connection.newStream(this.options.protocol);
+		log.general("opening new stream");
 
-		return this.handleStream(stream, connection);
+		try {
+			const stream = await connection.newStream(this.options.protocol);
+
+			return this.handleStream(stream, connection);
+		} catch (error) {
+			log.general.error("failed to open new stream: %o", error);
+
+			throw error;
+		}
 	}
 
 	private handleStream (stream: Stream, connection: Connection) {
 		const handlers = this.handlers;
-		const peerId = connection.remotePeer.toString();
+		const peerId = connection.remotePeer;
 
 		// Handle inputs.
 		pipe(stream, lp.decode(), async function (source) {
 			for await (const message of source) {
 				for (const handler of handlers) {
+					log.message("received message from peer: %p", connection.remotePeer);
 					handler(message.subarray(), connection.remotePeer);
 				}
 			}
-		}).catch(() => {
+		}).catch(error => {
 			// Do nothing
+			log.general.error("failed to handle incoming stream: %o", error)
 		});
 
-		// Don't pipe events through the same connection
-		if (this.writers.has(peerId)) {
-			return this.writers.get(peerId)!;
+		// Don't create a writer if one already exists.
+		const eWriter = this.writers.get(peerId.toString());
+
+		if (eWriter != null) {
+			return eWriter;
 		}
 
 		const writer = pushable();
 
-		this.writers.set(peerId, writer);
+		this.writers.set(peerId.toString(), writer);
 
 		// Handle outputs.
 		(async () => {
 			try {
 				await pipe(writer, lp.encode(), stream);
 			} finally {
-				this.writers.delete(peerId);
+				log.general("stream ended to peer: %p", peerId);
+				this.writers.delete(peerId.toString());
 			}
 		})();
 
