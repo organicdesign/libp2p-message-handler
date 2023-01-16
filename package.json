@@ -1,8 +1,9 @@
 {
   "type": "module",
   "name": "@organicdesign/libp2p-message-handler",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A message handler for Libp2p.",
+  "keywords": ["libp2p"],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
