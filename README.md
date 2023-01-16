@@ -2,6 +2,21 @@
 
 A message handler for Libp2p. This package makes it easy to create a protocol on Libp2p by converting the streams into a discrete messaging system.
 
+## Table of Contents
+
+- [Install](#install)
+- [Usage](#usage)
+- [API](#api)
+  - [createMessageHandler](#createmessagehandler)
+  - [MessageHandler](#messagehandler)
+    - [start](#start)
+    - [stop](#stop)
+    - [send](#send)
+    - [handle](#handle)
+    - [unhandle](#unhandle)
+- [Logging](#logging)
+- [TODO](#todo)
+
 ## Install
 
 ```
@@ -30,7 +45,7 @@ await handler.stop();
 
 ## API
 
-### createMessageHandler([options])(libp2p)
+### createMessageHandler
 
 ```javascript
 createMessageHandler([options])(libp2p);
@@ -43,30 +58,43 @@ createMessageHandler([options])(libp2p);
 
 Creates a Libp2p message handler.
 
-### handler.start()
+### MessageHandler
 
 ```javascript
-handler.start();
+new MessageHandler(libp2p, [options]);
+```
+
+- `options` `<Object>` An optional object with the following properties:
+  - `protocol` `<String>` A string which specifies the name of the protocol. Default: `"/message-handler/0.0.1"`.
+- `libp2p` `<Libp2p>` The libp2p instance.
+
+The MessageHandler class. It is not recommended to instanciate it directly but rather use the `createMessageHandler` function.
+
+
+#### start
+
+```javascript
+messageHandler.start();
 ```
 
 - Returns: `<Promise>`
 
 Start the message handler, resolves when it has finished starting.
 
-### handler.stop()
+#### stop
 
 ```javascript
-handler.stop();
+messageHandler.stop();
 ```
 
 - Returns: `<Promise>`
 
 Stop the message handler, resolves when it has finished stopping.
 
-### handler.send(message, peer)
+#### send
 
 ```javascript
-handler.send(message, peer);
+messageHandler.send(message, peer);
 ```
 - `message` `<Uint8Array>` The message to send.
 - `peer` `<PeerId>` The peer ID of the peer to send the message to.
@@ -74,20 +102,20 @@ handler.send(message, peer);
 
 Send a message to a connected peer. Resolves when the message is sent. Rejects if it fails to send the message.
 
-### handler.handle(handlerFunc)
+#### handle
 
 ```javascript
-handler.handle(handlerFunc);
+messageHandler.handle(handlerFunc);
 ```
 
 - `handlerFunc` `<(Uint8Array, PeerId) => void>` The handler function to call with the received message and the sender's peer ID.
 
 Handle incomming messages from other peers.
 
-### handler.unhandle(handlerFunc)
+#### unhandle
 
 ```javascript
-handler.unhandle(handlerFunc);
+messageHandler.unhandle(handlerFunc);
 ```
 
 - `handlerFunc` `<(Uint8Array, PeerId) => void>` The handler function which was previously handled.
@@ -116,4 +144,4 @@ localStorage.setItem("debug", "libp2p:message-handler:*");
 ## TODO
 
 - [ ] Add tests.
-- [ ] Add logging.
+- [x] Add logging.
