@@ -17,7 +17,7 @@ A message handler for Libp2p. This package makes it easy to create a protocol on
     - [unhandle](#unhandle)
 - [Logging](#logging)
 - [Tests](#tests)
-- [TODO](#todo)
+- [TODO](#to-do)
 
 ## Install
 
@@ -161,7 +161,7 @@ To run the test suite:
 npm run test
 ```
 
-## TODO
+## To-Do
 
 - [x] Add tests.
 - [x] Add logging.
