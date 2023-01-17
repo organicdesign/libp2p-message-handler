@@ -2,6 +2,7 @@ import type { ConnectionManager } from "@libp2p/interface-connection-manager";
 import type { Connection, Stream } from "@libp2p/interface-connection";
 import type { Registrar } from "@libp2p/interface-registrar";
 import type { PeerId } from "@libp2p/interface-peer-id";
+import type { Startable } from "@libp2p/interfaces/startable";
 import * as lp from "it-length-prefixed";
 import { pipe } from "it-pipe";
 import { pushable, Pushable } from "it-pushable";
@@ -23,11 +24,12 @@ export interface MessageHandlerOpts {
 
 export type Handler = (message: Uint8Array, peer: PeerId) => void;
 
-export class MessageHandler {
+export class MessageHandler implements Startable {
 	private readonly components: MessageHandlerComponents;
 	private readonly options: MessageHandlerOpts;
 	private readonly writers = new Map<string, Pushable<Uint8Array>>();
 	private readonly handlers = new Set<Handler>();
+	private started = false;
 
 	constructor (components: MessageHandlerComponents, options: Partial<MessageHandlerOpts> = {}) {
 		this.components = components;
@@ -43,6 +45,8 @@ export class MessageHandler {
 			this.handleStream(stream, connection);
 		});
 
+		this.started = true;
+
 		log.general("started");
 	}
 
@@ -51,7 +55,13 @@ export class MessageHandler {
 		await this.components.registrar.unhandle(this.options.protocol);
 		this.handlers.clear();
 
+		this.started = false;
+
 		log.general("stopped");
+	}
+
+	isStarted () {
+		return this.started;
 	}
 
 	// Send a message to a connected peer.

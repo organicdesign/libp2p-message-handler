@@ -1,3 +1,9 @@
+## [0.2.2](https://github.com/organicdesign/libp2p-message-handler/compare/v0.2.1...v0.2.2) (2023-01-17)
+
+### Added
+
+* Implement startable interface in message handler.
+
 ## [0.2.1](https://github.com/organicdesign/libp2p-message-handler/compare/v0.2.0...v0.2.1) (2023-01-17)
 
 ### Added

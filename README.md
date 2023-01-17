@@ -11,6 +11,7 @@ A message handler for Libp2p. This package makes it easy to create a protocol on
   - [MessageHandler](#messagehandler)
     - [start](#start)
     - [stop](#stop)
+    - [isStarted](#isStarted)
     - [send](#send)
     - [handle](#handle)
     - [unhandle](#unhandle)
@@ -90,6 +91,16 @@ messageHandler.stop();
 - Returns: `<Promise>`
 
 Stop the message handler, resolves when it has finished stopping.
+
+#### isStarted
+
+```javascript
+messageHandler.isStarted();
+```
+
+- Returns: `<boolean>`
+
+Check if the message handler is started.
 
 #### send
 
