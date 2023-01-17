@@ -1,3 +1,16 @@
+## [0.3.0](https://github.com/organicdesign/libp2p-message-handler/compare/v0.2.2...v0.3.0) (2023-01-18)
+
+### Added
+
+* MessageHandler tests:
+  * Startable interface tests.
+  * Handling messages tests.
+  * Sending messages tests.
+
+### Changed
+
+* Changed 'general' debug namespace.
+
 ## [0.2.2](https://github.com/organicdesign/libp2p-message-handler/compare/v0.2.1...v0.2.2) (2023-01-17)
 
 ### Added
