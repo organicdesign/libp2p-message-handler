@@ -138,19 +138,19 @@ Stop handling messages with this handler function.
 
 The logger has the following namespaces:
 
-* `libp2p:message-handler:general` - Logs general actions like starting, stopping and opening streams.
+* `libp2p:message-handler` - Logs general actions like starting, stopping and opening streams.
 * `libp2p:message-handler:messages` - Logs when it sends or receives messages.
 
 To enable logging in nodejs add the following environment variable (by prefixing the start command):
 
 ```
-DEBUG=libp2p:message-handler:*
+DEBUG=libp2p:message-handler*
 ```
 
 Or in the browser:
 
 ```javascript
-localStorage.setItem("debug", "libp2p:message-handler:*");
+localStorage.setItem("debug", "libp2p:message-handler*");
 ```
 
 ## Tests

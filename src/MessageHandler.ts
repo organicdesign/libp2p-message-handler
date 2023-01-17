@@ -10,7 +10,7 @@ import { logger } from "@libp2p/logger";
 
 const log = {
 	message: logger("libp2p:message-handler:messages"),
-	general: logger("libp2p:message-handler:general")
+	general: logger("libp2p:message-handler")
 };
 
 export interface MessageHandlerComponents {
