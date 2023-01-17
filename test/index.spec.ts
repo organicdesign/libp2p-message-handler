@@ -2,34 +2,37 @@ import { createRSAPeerId } from "@libp2p/peer-id-factory";
 import { mockRegistrar, mockConnectionManager, mockNetwork } from "@libp2p/interface-mocks";
 import { start } from "@libp2p/interfaces/startable";
 import { stubInterface } from "ts-sinon";
+import { jest } from "@jest/globals";
+import * as lp from "it-length-prefixed";
+import { pipe } from "it-pipe";
 import type { ConnectionManager } from "@libp2p/interface-connection-manager";
 import type { PeerId } from "@libp2p/interface-peer-id";
 import { MessageHandlerComponents, createMessageHandler, MessageHandler } from "../src/index.js";
 
-export const createComponents = async (): Promise<MessageHandlerComponents> => {
+export const createComponents = async (): Promise<MessageHandlerComponents & { peerId: PeerId }> => {
 	const components: MessageHandlerComponents & { peerId: PeerId } = {
 		peerId: await createRSAPeerId({ bits: 512 }),
 		registrar: mockRegistrar(),
 		connectionManager: stubInterface<ConnectionManager>()
-	}
+	};
 
 	components.connectionManager = mockConnectionManager(components);
 
-	await start(...Object.entries(components))
+	await start(...Object.entries(components));
 
-	mockNetwork.addNode(components)
+	mockNetwork.addNode(components);
 
 	return components;
 };
 
-let messageHandler: MessageHandler;
+let messageHandler: MessageHandler, components: MessageHandlerComponents & { peerId: PeerId };
 
 beforeEach(async () => {
-	const components = await createComponents();
+	components = await createComponents();
 	messageHandler = createMessageHandler()(components);
 });
 
-describe("startable inteface", () => {
+describe("startable interface", () => {
 	it("is not started after creation", async () => {
 		expect(messageHandler.isStarted()).toBe(false);
 	});
@@ -45,5 +48,41 @@ describe("startable inteface", () => {
 		await messageHandler.stop();
 
 		expect(messageHandler.isStarted()).toBe(false);
+	});
+});
+
+describe("message handling", () => {
+	beforeEach(async () => {
+		await messageHandler.start();
+	});
+
+	it("calls the handler function on every message", async () => {
+		const messages = [
+			new Uint8Array([1]),
+			new Uint8Array([123]),
+			new Uint8Array([123, 1, 1, 0, 0, 56])
+		];
+
+		const fn = jest.fn();
+
+		messageHandler.handle(fn);
+
+		const remote = await createComponents();
+		const connection = await remote.connectionManager.openConnection(components.peerId);
+		const stream = await connection.newStream("/message-handler/0.0.1");
+
+		await pipe(messages, lp.encode(), stream);
+
+		// Wait till the next tick to give the handler time to process the messages.
+		await new Promise(resolve => setTimeout(resolve, 1));
+
+		expect(fn).toBeCalledTimes(messages.length);
+
+		for (let i = 0; i < messages.length; i++) {
+			const args = fn.mock.calls[i];
+
+			expect(args[0]).toStrictEqual(messages[i]);
+			expect(remote.peerId.equals(args[1] as PeerId)).toBeTruthy();
+		}
 	});
 });
