@@ -17,7 +17,7 @@ A message handler for Libp2p. This package makes it easy to create a protocol on
     - [unhandle](#unhandle)
 - [Logging](#logging)
 - [Tests](#tests)
-- [TODO](#to-do)
+- [Fix contents title.](#to-do)
 
 ## Install
 
