@@ -1,6 +1,7 @@
 import type { ConnectionManager } from "@libp2p/interface-connection-manager";
 import type { Registrar } from "@libp2p/interface-registrar";
 import type { PeerId } from "@libp2p/interface-peer-id";
+import type { Startable } from "@libp2p/interfaces/startable";
 export interface MessageHandlerComponents {
     connectionManager: ConnectionManager;
     registrar: Registrar;
@@ -9,15 +10,17 @@ export interface MessageHandlerOpts {
     protocol: string;
 }
 export type Handler = (message: Uint8Array, peer: PeerId) => void;
-export declare class MessageHandler {
+export declare class MessageHandler implements Startable {
     private readonly components;
     private readonly options;
     private readonly writers;
     private readonly handlers;
+    private started;
     constructor(components: MessageHandlerComponents, options?: Partial<MessageHandlerOpts>);
     start(): Promise<void>;
     stop(): Promise<void>;
-    send(message: Uint8Array, peer: PeerId): Promise<void>;
+    isStarted(): boolean;
+    send(message: Uint8Array, peerId: PeerId): Promise<void>;
     handle(handler: Handler): void;
     unhandle(handler: Handler): void;
     private establishStream;

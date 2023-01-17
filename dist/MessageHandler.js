@@ -17,11 +17,17 @@ var __asyncValues = (this && this.__asyncValues) || function (o) {
 import * as lp from "it-length-prefixed";
 import { pipe } from "it-pipe";
 import { pushable } from "it-pushable";
+import { logger } from "@libp2p/logger";
+const log = {
+    message: logger("libp2p:message-handler:messages"),
+    general: logger("libp2p:message-handler:general")
+};
 export class MessageHandler {
     constructor(components, options = {}) {
         var _a;
         this.writers = new Map();
         this.handlers = new Set();
+        this.started = false;
         this.components = components;
         this.options = {
             protocol: (_a = options.protocol) !== null && _a !== void 0 ? _a : "/message-handler/0.0.1"
@@ -33,6 +39,8 @@ export class MessageHandler {
             yield this.components.registrar.handle(this.options.protocol, ({ stream, connection }) => __awaiter(this, void 0, void 0, function* () {
                 this.handleStream(stream, connection);
             }));
+            this.started = true;
+            log.general("started");
         });
     }
     // Stop the message handler.
@@ -40,43 +48,58 @@ export class MessageHandler {
         return __awaiter(this, void 0, void 0, function* () {
             yield this.components.registrar.unhandle(this.options.protocol);
             this.handlers.clear();
+            this.started = false;
+            log.general("stopped");
         });
     }
+    isStarted() {
+        return this.started;
+    }
     // Send a message to a connected peer.
-    send(message, peer) {
+    send(message, peerId) {
         return __awaiter(this, void 0, void 0, function* () {
-            const writer = yield this.establishStream(peer);
+            const writer = yield this.establishStream(peerId);
             writer.push(message);
+            log.message("sent message to: peer %p", peerId);
         });
     }
     // Handle an incomming message.
     handle(handler) {
         this.handlers.add(handler);
+        log.general("added message handler");
     }
     // Stop handling incomming messages with the handler.
     unhandle(handler) {
         this.handlers.delete(handler);
+        log.general("removed message handler");
     }
     // Establish a stream to a peer reusing an existing one if it already exists.
     establishStream(peer) {
         return __awaiter(this, void 0, void 0, function* () {
             const connection = this.components.connectionManager.getConnections().find(c => c.remotePeer.equals(peer));
             if (connection == null) {
+                log.general.error("failed to open stream: peer is not connected");
                 throw new Error("not connected");
             }
-            for (const stream of connection.streams) {
-                if (this.writers.has(stream.id)) {
-                    // We already have a stream open.
-                    return this.writers.get(stream.id);
-                }
+            const writer = this.writers.get(peer.toString());
+            if (writer != null) {
+                // We already have a stream open.
+                return writer;
             }
-            const stream = yield connection.newStream(this.options.protocol);
-            return this.handleStream(stream, connection);
+            log.general("opening new stream");
+            try {
+                const stream = yield connection.newStream(this.options.protocol);
+                return this.handleStream(stream, connection);
+            }
+            catch (error) {
+                log.general.error("failed to open new stream: %o", error);
+                throw error;
+            }
         });
     }
     handleStream(stream, connection) {
         const handlers = this.handlers;
-        const peerId = connection.remotePeer.toString();
+        const peerId = connection.remotePeer;
         // Handle inputs.
         pipe(stream, lp.decode(), function (source) {
             var _a, source_1, source_1_1;
@@ -89,6 +112,7 @@ export class MessageHandler {
                         try {
                             const message = _d;
                             for (const handler of handlers) {
+                                log.message("received message from peer: %p", connection.remotePeer);
                                 handler(message.subarray(), connection.remotePeer);
                             }
                         }
@@ -105,22 +129,25 @@ export class MessageHandler {
                     finally { if (e_1) throw e_1.error; }
                 }
             });
-        }).catch(() => {
+        }).catch(error => {
             // Do nothing
+            log.general.error("failed to handle incoming stream: %o", error);
         });
-        // Don't pipe events through the same connection
-        if (this.writers.has(peerId)) {
-            return this.writers.get(peerId);
+        // Don't create a writer if one already exists.
+        const eWriter = this.writers.get(peerId.toString());
+        if (eWriter != null) {
+            return eWriter;
         }
         const writer = pushable();
-        this.writers.set(peerId, writer);
+        this.writers.set(peerId.toString(), writer);
         // Handle outputs.
         (() => __awaiter(this, void 0, void 0, function* () {
             try {
                 yield pipe(writer, lp.encode(), stream);
             }
             finally {
-                this.writers.delete(peerId);
+                log.general("stream ended to peer: %p", peerId);
+                this.writers.delete(peerId.toString());
             }
         }))();
         return writer;

@@ -130,7 +130,7 @@ export class MessageHandler implements Startable {
 			}
 		}).catch(error => {
 			// Do nothing
-			log.general.error("failed to handle incoming stream: %o", error)
+			log.general.error("failed to handle incoming stream: %o", error);
 		});
 
 		// Don't create a writer if one already exists.
