@@ -7,6 +7,7 @@ import * as lp from "it-length-prefixed";
 import { pipe } from "it-pipe";
 import type { ConnectionManager } from "@libp2p/interface-connection-manager";
 import type { PeerId } from "@libp2p/interface-peer-id";
+import type { Stream } from "@libp2p/interface-connection";
 import { MessageHandlerComponents, createMessageHandler, MessageHandler } from "../src/index.js";
 
 export const createComponents = async (): Promise<MessageHandlerComponents & { peerId: PeerId }> => {
@@ -108,5 +109,63 @@ describe("message handling", () => {
 		await new Promise(resolve => setTimeout(resolve, 1));
 
 		expect(fn).not.toBeCalled();
+	});
+});
+
+describe("message sending", () => {
+	beforeEach(async () => {
+		await messageHandler.start();
+	});
+
+	it("sends messages to peers", async () => {
+		const messages = [
+			new Uint8Array([1]),
+			new Uint8Array([123]),
+			new Uint8Array([123, 1, 1, 0, 0, 56])
+		];
+
+		const remote = await createComponents();
+		await remote.connectionManager.openConnection(components.peerId);
+
+		// Set up a promise that will resolve to the handled stream.
+		let resolver: (stream: Stream) => void;
+
+		const promise: Promise<Stream> = new Promise(resolve => {
+			resolver = resolve;
+		});
+
+		// Resolve the stream.
+		await remote.registrar.handle("/message-handler/0.0.1", async ({ stream }) => {
+			resolver(stream);
+		});
+
+		// Read the stream into responses.
+		const responsePromises = (async () => {
+			const responses: Uint8Array[] = [];
+			const stream = await promise;
+
+			await pipe(stream, lp.decode(), async (itr) => {
+				for await (const response of itr) {
+					responses.push(response.subarray());
+
+					if (responses.length === messages.length) {
+						return;
+					}
+				}
+			});
+
+			return responses;
+		})();
+
+		// Send all the messages.
+		for (const message of messages) {
+			await messageHandler.send(message, remote.peerId);
+		}
+
+		// Await the responses.
+		const responses = await responsePromises;
+
+		// Check the responses are the same as what was sent.
+		expect(responses).toStrictEqual(messages);
 	});
 });
