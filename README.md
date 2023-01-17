@@ -16,6 +16,7 @@ A message handler for Libp2p. This package makes it easy to create a protocol on
     - [handle](#handle)
     - [unhandle](#unhandle)
 - [Logging](#logging)
+- [Tests](#testing)
 - [TODO](#todo)
 
 ## Install
@@ -152,7 +153,15 @@ Or in the browser:
 localStorage.setItem("debug", "libp2p:message-handler:*");
 ```
 
+## Tests
+
+To run the test suite:
+
+```
+npm run test
+```
+
 ## TODO
 
-- [ ] Add tests.
+- [x] Add tests.
 - [x] Add logging.
