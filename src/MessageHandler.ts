@@ -41,6 +41,10 @@ export class MessageHandler implements Startable {
 
 	// Start the message handler.
 	async start (): Promise<void> {
+		if (this.isStarted()) {
+			return;
+		}
+
 		await this.components.registrar.handle(this.options.protocol, async ({ stream, connection }) => {
 			this.handleStream(stream, connection);
 		});
@@ -52,6 +56,10 @@ export class MessageHandler implements Startable {
 
 	// Stop the message handler.
 	async stop (): Promise<void> {
+		if (!this.isStarted()) {
+			return;
+		}
+
 		await this.components.registrar.unhandle(this.options.protocol);
 		this.handlers.clear();
 
