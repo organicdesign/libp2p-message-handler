@@ -40,7 +40,7 @@ export class MessageHandler implements Startable {
 	}
 
 	// Start the message handler.
-	async start () {
+	async start (): Promise<void> {
 		await this.components.registrar.handle(this.options.protocol, async ({ stream, connection }) => {
 			this.handleStream(stream, connection);
 		});
@@ -51,7 +51,7 @@ export class MessageHandler implements Startable {
 	}
 
 	// Stop the message handler.
-	async stop () {
+	async stop (): Promise<void> {
 		await this.components.registrar.unhandle(this.options.protocol);
 		this.handlers.clear();
 
@@ -60,12 +60,12 @@ export class MessageHandler implements Startable {
 		log.general("stopped");
 	}
 
-	isStarted () {
+	isStarted (): boolean {
 		return this.started;
 	}
 
 	// Send a message to a connected peer.
-	async send (message: Uint8Array, peerId: PeerId) {
+	async send (message: Uint8Array, peerId: PeerId): Promise<void> {
 		const writer = await this.establishStream(peerId);
 
 		writer.push(message);
@@ -74,14 +74,14 @@ export class MessageHandler implements Startable {
 	}
 
 	// Handle an incomming message.
-	handle (handler: Handler) {
+	handle (handler: Handler): void {
 		this.handlers.add(handler);
 
 		log.general("added message handler");
 	}
 
 	// Stop handling incomming messages with the handler.
-	unhandle (handler: Handler) {
+	unhandle (handler: Handler): void {
 		this.handlers.delete(handler);
 
 		log.general("removed message handler");
