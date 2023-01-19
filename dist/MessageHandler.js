@@ -20,7 +20,7 @@ import { pushable } from "it-pushable";
 import { logger } from "@libp2p/logger";
 const log = {
     message: logger("libp2p:message-handler:messages"),
-    general: logger("libp2p:message-handler:general")
+    general: logger("libp2p:message-handler")
 };
 export class MessageHandler {
     constructor(components, options = {}) {
@@ -36,7 +36,10 @@ export class MessageHandler {
     // Start the message handler.
     start() {
         return __awaiter(this, void 0, void 0, function* () {
-            yield this.components.registrar.handle(this.options.protocol, ({ stream, connection }) => __awaiter(this, void 0, void 0, function* () {
+            if (this.isStarted()) {
+                return;
+            }
+            yield this.components.handle(this.options.protocol, ({ stream, connection }) => __awaiter(this, void 0, void 0, function* () {
                 this.handleStream(stream, connection);
             }));
             this.started = true;
@@ -46,7 +49,10 @@ export class MessageHandler {
     // Stop the message handler.
     stop() {
         return __awaiter(this, void 0, void 0, function* () {
-            yield this.components.registrar.unhandle(this.options.protocol);
+            if (!this.isStarted()) {
+                return;
+            }
+            yield this.components.unhandle(this.options.protocol);
             this.handlers.clear();
             this.started = false;
             log.general("stopped");
@@ -76,7 +82,7 @@ export class MessageHandler {
     // Establish a stream to a peer reusing an existing one if it already exists.
     establishStream(peer) {
         return __awaiter(this, void 0, void 0, function* () {
-            const connection = this.components.connectionManager.getConnections().find(c => c.remotePeer.equals(peer));
+            const connection = this.components.getConnections().find(c => c.remotePeer.equals(peer));
             if (connection == null) {
                 log.general.error("failed to open stream: peer is not connected");
                 throw new Error("not connected");

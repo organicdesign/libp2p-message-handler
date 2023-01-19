@@ -1,11 +1,7 @@
-import type { ConnectionManager } from "@libp2p/interface-connection-manager";
-import type { Registrar } from "@libp2p/interface-registrar";
+import type { Libp2p } from "@libp2p/interface-libp2p";
 import type { PeerId } from "@libp2p/interface-peer-id";
 import type { Startable } from "@libp2p/interfaces/startable";
-export interface MessageHandlerComponents {
-    connectionManager: ConnectionManager;
-    registrar: Registrar;
-}
+export type MessageHandlerComponents = Pick<Libp2p, "getConnections" | "handle" | "unhandle">;
 export interface MessageHandlerOpts {
     protocol: string;
 }

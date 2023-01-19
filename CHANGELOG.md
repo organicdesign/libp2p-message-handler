@@ -1,3 +1,9 @@
+## [0.4.1](https://github.com/organicdesign/libp2p-message-handler/compare/v0.4.0...v0.4.1) (2023-01-20)
+
+### Fixed
+
+* Updated dist files.
+
 ## [0.4.0](https://github.com/organicdesign/libp2p-message-handler/compare/v0.3.2...v0.4.0) (2023-01-20)
 
 ### Changed
