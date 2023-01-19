@@ -1,4 +1,4 @@
-## [0.4.0](https://github.com/organicdesign/libp2p-message-handler/compare/v0.3.1...v0.4.0) (2023-01-20)
+## [0.4.0](https://github.com/organicdesign/libp2p-message-handler/compare/v0.3.2...v0.4.0) (2023-01-20)
 
 ### Changed
 
