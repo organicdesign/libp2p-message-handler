@@ -1,5 +1,6 @@
 import type { ConnectionManager } from "@libp2p/interface-connection-manager";
 import type { Connection, Stream } from "@libp2p/interface-connection";
+import type { Libp2p } from "@libp2p/interface-libp2p";
 import type { Registrar } from "@libp2p/interface-registrar";
 import type { PeerId } from "@libp2p/interface-peer-id";
 import type { Startable } from "@libp2p/interfaces/startable";
@@ -13,10 +14,7 @@ const log = {
 	general: logger("libp2p:message-handler")
 };
 
-export interface MessageHandlerComponents {
-	connectionManager: ConnectionManager
-	registrar: Registrar
-}
+export type MessageHandlerComponents = Libp2p;
 
 export interface MessageHandlerOpts {
 	protocol: string
@@ -41,7 +39,7 @@ export class MessageHandler implements Startable {
 
 	// Start the message handler.
 	async start (): Promise<void> {
-		await this.components.registrar.handle(this.options.protocol, async ({ stream, connection }) => {
+		await this.components.handle(this.options.protocol, async ({ stream, connection }) => {
 			this.handleStream(stream, connection);
 		});
 
@@ -52,7 +50,7 @@ export class MessageHandler implements Startable {
 
 	// Stop the message handler.
 	async stop (): Promise<void> {
-		await this.components.registrar.unhandle(this.options.protocol);
+		await this.components.unhandle(this.options.protocol);
 		this.handlers.clear();
 
 		this.started = false;
@@ -89,7 +87,7 @@ export class MessageHandler implements Startable {
 
 	// Establish a stream to a peer reusing an existing one if it already exists.
 	private async establishStream (peer: PeerId) {
-		const connection = this.components.connectionManager.getConnections().find(c => c.remotePeer.equals(peer));
+		const connection = this.components.getConnections().find(c => c.remotePeer.equals(peer));
 
 		if (connection == null) {
 			log.general.error("failed to open stream: peer is not connected");
