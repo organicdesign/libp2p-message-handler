@@ -183,3 +183,61 @@ describe("message sending", () => {
 		expect(responses).toStrictEqual(messages);
 	});
 });
+
+describe("broadcast", () => {
+	beforeEach(async () => {
+		await messageHandler.start();
+	});
+
+	it("sends broadcast messages", async () => {
+		const messages = [
+			new Uint8Array([1]),
+			new Uint8Array([123]),
+			new Uint8Array([123, 1, 1, 0, 0, 56])
+		];
+
+		const remote = await createComponents();
+		await remote.dial(components.peerId);
+
+		// Set up a promise that will resolve to the handled stream.
+		let resolver: (stream: Stream) => void;
+
+		const promise: Promise<Stream> = new Promise(resolve => {
+			resolver = resolve;
+		});
+
+		// Resolve the stream.
+		await remote.handle("/message-handler/0.0.1", async ({ stream }) => {
+			resolver(stream);
+		});
+
+		// Read the stream into responses.
+		const responsePromises = (async () => {
+			const responses: Uint8Array[] = [];
+			const stream = await promise;
+
+			await pipe(stream, lp.decode(), async (itr) => {
+				for await (const response of itr) {
+					responses.push(response.subarray());
+
+					if (responses.length === messages.length) {
+						return;
+					}
+				}
+			});
+
+			return responses;
+		})();
+
+		// Send all the messages.
+		for (const message of messages) {
+			await messageHandler.broadcast(message);
+		}
+
+		// Await the responses.
+		const responses = await responsePromises;
+
+		// Check the responses are the same as what was sent.
+		expect(responses).toStrictEqual(messages);
+	});
+});
