@@ -4,6 +4,12 @@
 
 * Updated components to use Libp2p interface. (Changed in Libp2p@42)
 
+## [0.3.2](https://github.com/organicdesign/libp2p-message-handler/compare/v0.3.1...v0.3.2) (2023-01-19)
+
+### Fixed
+
+* Fix errors from calling start multiple times.
+
 ## [0.3.1](https://github.com/organicdesign/libp2p-message-handler/compare/v0.3.0...v0.3.1) (2023-01-18)
 
 ### Fixed
