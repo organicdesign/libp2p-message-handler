@@ -10,7 +10,7 @@ import type { PeerId } from "@libp2p/interface-peer-id";
 import type { Stream } from "@libp2p/interface-connection";
 import { MessageHandlerComponents, createMessageHandler, MessageHandler } from "../src/index.js";
 
-export const createComponents = async (): Promise<MessageHandlerComponents & { peerId: PeerId }> => {
+const createComponents = async (): Promise<MessageHandlerComponents & { peerId: PeerId }> => {
 	const components: MessageHandlerComponents & { peerId: PeerId } = {
 		peerId: await createRSAPeerId({ bits: 512 }),
 		registrar: mockRegistrar(),
