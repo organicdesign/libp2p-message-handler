@@ -1,7 +1,5 @@
-import type { ConnectionManager } from "@libp2p/interface-connection-manager";
 import type { Connection, Stream } from "@libp2p/interface-connection";
 import type { Libp2p } from "@libp2p/interface-libp2p";
-import type { Registrar } from "@libp2p/interface-registrar";
 import type { PeerId } from "@libp2p/interface-peer-id";
 import type { Startable } from "@libp2p/interfaces/startable";
 import * as lp from "it-length-prefixed";
@@ -14,7 +12,8 @@ const log = {
 	general: logger("libp2p:message-handler")
 };
 
-export type MessageHandlerComponents = Libp2p;
+// Reduce Libp2p to only the properties we use.
+export type MessageHandlerComponents = Pick<Libp2p, "getConnections" | "handle" | "unhandle">;
 
 export interface MessageHandlerOpts {
 	protocol: string
