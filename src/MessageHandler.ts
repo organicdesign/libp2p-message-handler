@@ -78,6 +78,12 @@ export class MessageHandler implements Startable {
 		log.message("sent message to: peer %p", peerId);
 	}
 
+	async broadcast (message: Uint8Array): Promise<PromiseSettledResult<void>[]> {
+		return await Promise.allSettled(
+			this.components.getConnections().map(c => this.send(message, c.remotePeer))
+		);
+	}
+
 	// Handle an incomming message.
 	handle (handler: Handler): void {
 		this.handlers.add(handler);
