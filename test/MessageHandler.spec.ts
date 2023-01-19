@@ -8,25 +8,39 @@ import { pipe } from "it-pipe";
 import type { ConnectionManager } from "@libp2p/interface-connection-manager";
 import type { PeerId } from "@libp2p/interface-peer-id";
 import type { Stream } from "@libp2p/interface-connection";
+import type { Libp2p } from "@libp2p/interface-libp2p";
 import { MessageHandlerComponents, createMessageHandler, MessageHandler } from "../src/index.js";
 
-const createComponents = async (): Promise<MessageHandlerComponents & { peerId: PeerId }> => {
-	const components: MessageHandlerComponents & { peerId: PeerId } = {
+interface TestMessageHandlerComponents extends MessageHandlerComponents {
+	peerId: PeerId
+	dial: Libp2p["dial"]
+}
+
+const createComponents = async (): Promise<TestMessageHandlerComponents> => {
+	const oldComponents = {
 		peerId: await createRSAPeerId({ bits: 512 }),
 		registrar: mockRegistrar(),
-		connectionManager: stubInterface<ConnectionManager>()
+		connectionManager: stubInterface<ConnectionManager>() as ConnectionManager
 	};
 
-	components.connectionManager = mockConnectionManager(components);
+	oldComponents.connectionManager = mockConnectionManager(oldComponents);
+
+	const components: TestMessageHandlerComponents = {
+		peerId: oldComponents.peerId,
+		dial: (peerId) => oldComponents.connectionManager.openConnection(peerId),
+		handle: (protocol: string, handler) => oldComponents.registrar.handle(protocol, handler),
+		unhandle: (protocol: string) => oldComponents.registrar.unhandle(protocol),
+		getConnections: () => oldComponents.connectionManager.getConnections()
+	};
 
 	await start(...Object.entries(components));
 
-	mockNetwork.addNode(components);
+	mockNetwork.addNode(oldComponents);
 
 	return components;
 };
 
-let messageHandler: MessageHandler, components: MessageHandlerComponents & { peerId: PeerId };
+let messageHandler: MessageHandler, components: TestMessageHandlerComponents;
 
 beforeEach(async () => {
 	components = await createComponents();
@@ -69,7 +83,7 @@ describe("message handling", () => {
 		messageHandler.handle(fn);
 
 		const remote = await createComponents();
-		const connection = await remote.connectionManager.openConnection(components.peerId);
+		const connection = await remote.dial(components.peerId);
 		const stream = await connection.newStream("/message-handler/0.0.1");
 
 		await pipe(messages, lp.encode(), stream);
@@ -100,7 +114,7 @@ describe("message handling", () => {
 		messageHandler.unhandle(fn);
 
 		const remote = await createComponents();
-		const connection = await remote.connectionManager.openConnection(components.peerId);
+		const connection = await remote.dial(components.peerId);
 		const stream = await connection.newStream("/message-handler/0.0.1");
 
 		await pipe(messages, lp.encode(), stream);
@@ -125,7 +139,7 @@ describe("message sending", () => {
 		];
 
 		const remote = await createComponents();
-		await remote.connectionManager.openConnection(components.peerId);
+		await remote.dial(components.peerId);
 
 		// Set up a promise that will resolve to the handled stream.
 		let resolver: (stream: Stream) => void;
@@ -135,7 +149,7 @@ describe("message sending", () => {
 		});
 
 		// Resolve the stream.
-		await remote.registrar.handle("/message-handler/0.0.1", async ({ stream }) => {
+		await remote.handle("/message-handler/0.0.1", async ({ stream }) => {
 			resolver(stream);
 		});
 
