@@ -196,35 +196,49 @@ describe("broadcast", () => {
 			new Uint8Array([123, 1, 1, 0, 0, 56])
 		];
 
-		const remote = await createComponents();
-		await remote.dial(components.peerId);
+		const remotes = [
+			await createComponents(),
+			await createComponents(),
+			await createComponents()
+		];
 
-		// Set up a promise that will resolve to the handled stream.
-		let resolver: (stream: Stream) => void;
+		const promises: Promise<Stream>[] = [];
 
-		const promise: Promise<Stream> = new Promise(resolve => {
-			resolver = resolve;
-		});
+		for (let i = 0; i < remotes.length; i++) {
+			await remotes[i].dial(components.peerId);
 
-		// Resolve the stream.
-		await remote.handle("/message-handler/0.0.1", async ({ stream }) => {
-			resolver(stream);
-		});
+			// Set up a promise that will resolve to the handled stream.
+			let resolver: (stream: Stream) => void;
+
+			promises.push(new Promise(resolve => {
+				resolver = resolve;
+			}));
+
+			// Resolve the stream.
+			await remotes[i].handle("/message-handler/0.0.1", async ({ stream }) => {
+				resolver(stream);
+			});
+		}
 
 		// Read the stream into responses.
 		const responsePromises = (async () => {
-			const responses: Uint8Array[] = [];
-			const stream = await promise;
+			const responses: Uint8Array[][] = [];
 
-			await pipe(stream, lp.decode(), async (itr) => {
-				for await (const response of itr) {
-					responses.push(response.subarray());
+			for (let i = 0; i < promises.length; i++) {
+				responses[i] = [];
 
-					if (responses.length === messages.length) {
-						return;
+				const stream = await promises[i];
+
+				await pipe(stream, lp.decode(), async (itr) => {
+					for await (const response of itr) {
+						responses[i].push(response.subarray());
+
+						if (responses[i].length === messages.length) {
+							return;
+						}
 					}
-				}
-			});
+				});
+			}
 
 			return responses;
 		})();
@@ -238,6 +252,8 @@ describe("broadcast", () => {
 		const responses = await responsePromises;
 
 		// Check the responses are the same as what was sent.
-		expect(responses).toStrictEqual(messages);
+		for (const peerMessages of responses) {
+			expect(peerMessages).toStrictEqual(messages);
+		}
 	});
 });
