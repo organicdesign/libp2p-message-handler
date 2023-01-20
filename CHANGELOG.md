@@ -1,3 +1,9 @@
+## [0.4.2](https://github.com/organicdesign/libp2p-message-handler/compare/v0.4.1...v0.4.2) (2023-01-20)
+
+### Added
+
+* Added `broadcast` method.
+
 ## [0.4.1](https://github.com/organicdesign/libp2p-message-handler/compare/v0.4.0...v0.4.1) (2023-01-20)
 
 ### Fixed
