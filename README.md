@@ -13,6 +13,7 @@ A message handler for Libp2p. This package makes it easy to create a protocol on
     - [stop](#stop)
     - [isStarted](#isStarted)
     - [send](#send)
+    - [broadcast](#broadcast)
     - [handle](#handle)
     - [unhandle](#unhandle)
 - [Logging](#logging)
@@ -113,6 +114,17 @@ messageHandler.send(message, peer);
 - Returns: `<Promise>`
 
 Send a message to a connected peer. Resolves when the message is sent. Rejects if it fails to send the message.
+
+#### broadcast
+
+```javascript
+messageHandler.broadcast(message);
+```
+
+- `message` `<Uint8Array>` The message to send.
+- Returns: `<Promise>` Resolves to a list of `<PromiseSettledResult>`s.
+
+Send a message to all connected peers. Resolves when the message has been sent or has failed to be sent to all pairs. This method only sends the message to connected pairs, if you are wanting to send a message to the entire network you should use a pubsub module instead.
 
 #### handle
 
