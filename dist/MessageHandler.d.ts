@@ -17,6 +17,7 @@ export declare class MessageHandler implements Startable {
     stop(): Promise<void>;
     isStarted(): boolean;
     send(message: Uint8Array, peerId: PeerId): Promise<void>;
+    broadcast(message: Uint8Array): Promise<PromiseSettledResult<void>[]>;
     handle(handler: Handler): void;
     unhandle(handler: Handler): void;
     private establishStream;

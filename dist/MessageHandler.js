@@ -69,6 +69,11 @@ export class MessageHandler {
             log.message("sent message to: peer %p", peerId);
         });
     }
+    broadcast(message) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield Promise.allSettled(this.components.getConnections().map(c => this.send(message, c.remotePeer)));
+        });
+    }
     // Handle an incomming message.
     handle(handler) {
         this.handlers.add(handler);
