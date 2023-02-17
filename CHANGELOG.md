@@ -1,3 +1,9 @@
+## [0.4.3](https://github.com/organicdesign/libp2p-message-handler/compare/v0.4.2...v0.4.3) (2023-02-17)
+
+### Fixed
+
+* Fixed security issue in undici.
+
 ## [0.4.2](https://github.com/organicdesign/libp2p-message-handler/compare/v0.4.1...v0.4.2) (2023-01-20)
 
 ### Added
